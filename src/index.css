@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bebas Neue", sans-serif;
+  --color-accent-red: #e24b4a;
+}
+
+body {
+  background-color: #0f0f0f;
+  color: #ffffff;
+  font-family: var(--font-sans);
+}
+
+/* Glass card styling matching Immersive UI spec */
+.glass-card {
+  background: rgba(26, 26, 26, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Gradient colors for buttons, levels, progress meters */
+.red-gradient {
+  background: linear-gradient(135deg, #e24b4a 0%, #992121 100%);
+}
+
+/* Premium Crimson Accent Glow */
+.accent-glow {
+  box-shadow: 0 0 15px rgba(226, 75, 74, 0.4);
+}
+
+/* Active navigation highlighted states */
+.sidebar-item-active {
+  background: rgba(226, 75, 74, 0.1);
+  color: #e24b4a;
+  border-right: 3px solid #e24b4a;
+}
+
+/* Slide up animation for bottom detail drawers */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Elegant responsive appearance transition */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.45s ease-out forwards;
+}
+
+/* Dark mode premium scrollbar rules */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(226, 75, 74, 0.4);
+}
