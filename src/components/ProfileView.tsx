@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { User, Award, Shield, Settings, Bell, HelpCircle, Flame, Check, CheckCircle2, Save } from 'lucide-react';
+import { User, Award, Shield, Settings, Bell, HelpCircle, Flame, Check, CheckCircle2, Save, LogOut } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface ProfileViewProps {
   profile: UserProfile;
   setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
+  onLogout?: () => void;
 }
 
-export default function ProfileView({ profile, setProfile }: ProfileViewProps) {
+export default function ProfileView({ profile, setProfile, onLogout }: ProfileViewProps) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [showSavedFeedback, setShowSavedFeedback] = useState<boolean>(false);
   const fitnessGoals = ['Beginners', 'Weight Loss', 'Bodybuilder', 'Powerlifter', 'Athletic'];
@@ -331,6 +332,23 @@ export default function ProfileView({ profile, setProfile }: ProfileViewProps) {
           })}
         </div>
       </div>
+
+      {onLogout && (
+        <div className="bg-zinc-950/40 border border-red-500/20 rounded-2xl p-6 shadow-xl flex items-center justify-between gap-4">
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Session Management</h4>
+            <p className="text-xs text-white/40 mt-1 font-sans">
+              Log out of your current account and clear the session.
+            </p>
+          </div>
+          <button
+            onClick={onLogout}
+            className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-400 font-extrabold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer active:scale-95 text-xs tracking-wider uppercase"
+          >
+            <LogOut className="w-4 h-4" /> Log Out
+          </button>
+        </div>
+      )}
     </div>
   );
 }

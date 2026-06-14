@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dumbbell, Sparkles, ChevronLeft, Calendar, Award } from 'lucide-react';
+import { Dumbbell, Sparkles, ChevronLeft, Calendar, Award, Loader } from 'lucide-react';
 import { EXERCISES, WEEKLY_PROGRAMS, INITIAL_PROFILE } from './data';
 import { Exercise, UserProfile } from './types';
 import Navigation from './components/Navigation';
@@ -9,8 +9,13 @@ import TrainView from './components/TrainView';
 import ProgramView from './components/ProgramView';
 import ProfileView from './components/ProfileView';
 import DetailSheet from './components/DetailSheet';
+import AuthView from './components/AuthView';
 
 export default function App() {
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('fw_auth_token'));
+  const [username, setUsername] = useState<string | null>(() => localStorage.getItem('fw_auth_username'));
+  const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
+
   const [showLanding, setShowLanding] = useState<boolean>(() => {
     const saved = localStorage.getItem('fw_show_landing');
     return saved ? JSON.parse(saved) : true;
@@ -21,18 +26,11 @@ export default function App() {
     return saved || 'dashboard';
   });
 
-  const [profile, setProfile] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('fw_user_profile');
-    return saved ? JSON.parse(saved) : INITIAL_PROFILE;
-  });
+  const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
 
   // Keep track of which sets have been logged completed
   // Format: { [exerciseId]: [set0_done, set1_done, set2_done, ...] }
   const [completedSets, setCompletedSets] = useState<Record<string, boolean[]>>(() => {
-    const saved = localStorage.getItem('fw_completed_sets');
-    if (saved) return JSON.parse(saved);
-
-    // Initialize set arrays based on exercise counts
     const initial: Record<string, boolean[]> = {};
     EXERCISES.forEach((ex) => {
       initial[ex.id] = Array(ex.sets).fill(false);
@@ -41,6 +39,83 @@ export default function App() {
   });
 
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+
+  // Verify token validity on load
+  useEffect(() => {
+    const checkToken = async () => {
+      if (!token) {
+        setIsAuthChecking(false);
+        return;
+      }
+      try {
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setProfile(data.user.profile);
+          setCompletedSets(data.user.completedSets || {});
+        } else {
+          // Token is invalid
+          handleLogout();
+        }
+      } catch (err) {
+        console.error("Token verification failed:", err);
+      } finally {
+        setIsAuthChecking(false);
+      }
+    };
+    checkToken();
+  }, [token]);
+
+  // Sync to database
+  const syncData = async (updatedProfile: UserProfile, updatedSets: Record<string, boolean[]>) => {
+    if (!token) return;
+    try {
+      await fetch('/api/auth/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          profile: updatedProfile,
+          completedSets: updatedSets
+        })
+      });
+    } catch (err) {
+      console.error("Failed to sync data to server:", err);
+    }
+  };
+
+  const handleAuthSuccess = (newToken: string, user: { id: string; username: string; profile: any; completedSets: any }) => {
+    setToken(newToken);
+    setUsername(user.username);
+    localStorage.setItem('fw_auth_token', newToken);
+    localStorage.setItem('fw_auth_username', user.username);
+    setProfile(user.profile);
+    setCompletedSets(user.completedSets || {});
+    setIsAuthChecking(false);
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setUsername(null);
+    localStorage.removeItem('fw_auth_token');
+    localStorage.removeItem('fw_auth_username');
+    localStorage.removeItem('fw_user_profile');
+    localStorage.removeItem('fw_completed_sets');
+    setProfile(INITIAL_PROFILE);
+    
+    const initial: Record<string, boolean[]> = {};
+    EXERCISES.forEach((ex) => {
+      initial[ex.id] = Array(ex.sets).fill(false);
+    });
+    setCompletedSets(initial);
+    setShowLanding(true);
+  };
 
   // Sync to localStorage
   useEffect(() => {
@@ -52,12 +127,18 @@ export default function App() {
   }, [activeTab]);
 
   useEffect(() => {
-    localStorage.setItem('fw_user_profile', JSON.stringify(profile));
-  }, [profile]);
+    if (token) {
+      localStorage.setItem('fw_user_profile', JSON.stringify(profile));
+      syncData(profile, completedSets);
+    }
+  }, [profile, token]);
 
   useEffect(() => {
-    localStorage.setItem('fw_completed_sets', JSON.stringify(completedSets));
-  }, [completedSets]);
+    if (token) {
+      localStorage.setItem('fw_completed_sets', JSON.stringify(completedSets));
+      syncData(profile, completedSets);
+    }
+  }, [completedSets, token]);
 
   // Handle set toggling completion
   const toggleSetCompleted = (exerciseId: string, setIndex: number) => {
@@ -138,7 +219,7 @@ export default function App() {
       case 'program':
         return <ProgramView profile={profile} setProfile={setProfile} />;
       case 'profile':
-        return <ProfileView profile={profile} setProfile={setProfile} />;
+        return <ProfileView profile={profile} setProfile={setProfile} onLogout={handleLogout} />;
       default:
         return (
           <DashboardView
@@ -152,6 +233,18 @@ export default function App() {
         );
     }
   };
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        <Loader className="w-10 h-10 animate-spin text-emerald-400" />
+      </div>
+    );
+  }
+
+  if (!token) {
+    return <AuthView onAuthSuccess={handleAuthSuccess} />;
+  }
 
   if (showLanding) {
     return (
