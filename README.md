@@ -2,6 +2,8 @@
 
 Fitness World is an intense, immersive, AI-powered personal trainer and workout tracker designed to level up your fitness journey. Get real-time, professional advice tailored specifically to your workout split (e.g., Bodybuilder, Powerlifter, Athletic, Beginner, or Weight Loss) using advanced artificial intelligence.
 
+Webapp link: ( https://fitness-world-5lq2.onrender.com/ )
+
 ---
 
 ## 🚀 Key Features
